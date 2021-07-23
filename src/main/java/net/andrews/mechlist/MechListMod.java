@@ -94,6 +94,8 @@ public class MechListMod {
                                     whitelist.add(new WhitelistEntry(gameProfile));
                                 }
 
+                            } else {
+                                sendFeedback(ctx, "Player " + name + " cannot be whitelisted!", true);
                             }
                         }
                         server.kickNonWhitelistedPlayers(ctx.getSource());
