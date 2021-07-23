@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "mechlist",
+  "version": "${version}",
+
+  "name": "Mechlist",
+  "description": "Manages whitelists",
+  "authors": [
+    "Andrews54757"
+  ],
+  "contact": {
+    "homepage": "https://github.com/Andrews54757/MechList",
+    "sources": "https://github.com/Andrews54757/MechList"
+  },
+
+  "license": "AGPL-3.0",
+  "icon": "assets/mechlist/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.andrews.mechlist.MechList"
+    ]
+  },
+  "mixins": [
+    "mechlist.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.7.4",
+    "minecraft": "1.16.x"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.andrews.mechlist.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MixinCommandManager"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
