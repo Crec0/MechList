@@ -24,3 +24,6 @@ You need to get the keys from google api
   }
 }
 ```
+
+## Special Thanks
+Special thanks to Creco for making this mod work.
