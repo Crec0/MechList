@@ -114,6 +114,7 @@ public class GoogleSheets {
 				.filter(e -> !e.isEmpty())
 				.map(row -> (String) row.get(0))
 				.map(String::toLowerCase)
+				.map(String::trim)
 				.collect(Collectors.toSet());
 		}
 	}
