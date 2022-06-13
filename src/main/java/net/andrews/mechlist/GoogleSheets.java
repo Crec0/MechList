@@ -119,7 +119,7 @@ public class GoogleSheets {
 		for (List<Object> row : values) {
 			for (Object cell : row) {
 				String username = ((String)cell).trim().toLowerCase();
-				if (username.isEmpty()) {
+				if (!username.isEmpty()) {
 					usernames.add(username);
 				}
 			}
