@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -37,7 +38,8 @@ public class GoogleSheets {
 	private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS);
 
 	private static boolean isValidCredential(Credential credential) {
-		return credential != null && (credential.getRefreshToken() != null || credential.getExpiresInSeconds() == null || credential.getExpiresInSeconds() > 60);
+		return credential != null && (credential.getRefreshToken() != null || credential.getExpiresInSeconds() == null
+				|| credential.getExpiresInSeconds() > 60);
 	}
 
 	/**
@@ -47,20 +49,20 @@ public class GoogleSheets {
 	 * @return An authorized Credential object.
 	 * @throws IOException If the credentials.json file cannot be found.
 	 */
-	private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT, Consumer<String> authMessageCallback) throws IOException {
+	private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT,
+			Consumer<String> authMessageCallback) throws IOException {
 
 		BufferedReader credentialsStream = Files.newBufferedReader(ConfigFiles.CREDENTIALS.getPath());
 		GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, credentialsStream);
 
 		// Build flow and trigger user authorization request.
 		GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-			HTTP_TRANSPORT,
-			JSON_FACTORY,
-			clientSecrets,
-			SCOPES
-		).setDataStoreFactory(new FileDataStoreFactory(ConfigFiles.TOKENS.getPath().toFile()))
-		 .setAccessType("offline")
-		 .build();
+				HTTP_TRANSPORT,
+				JSON_FACTORY,
+				clientSecrets,
+				SCOPES).setDataStoreFactory(new FileDataStoreFactory(ConfigFiles.TOKENS.getPath().toFile()))
+				.setAccessType("offline")
+				.build();
 
 		if (localServerReceiver != null) {
 			localServerReceiver.stop();
@@ -93,15 +95,17 @@ public class GoogleSheets {
 		}
 	}
 
-	public static Set<String> getUsernames(Consumer<String> authMessageCallback) throws IOException, GeneralSecurityException {
+	public static Set<String> getUsernames(Consumer<String> authMessageCallback)
+			throws IOException, GeneralSecurityException {
 		// Build a new authorized API client service.
 		final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
 		final String spreadsheetId = MechList.getConfig().spreadsheetId();
 		final String range = MechList.getConfig().sheetRange();
 
-		Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT, authMessageCallback))
-			.setApplicationName(MechList.USER_ID)
-			.build();
+		Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY,
+				getCredentials(HTTP_TRANSPORT, authMessageCallback))
+				.setApplicationName(MechList.USER_ID)
+				.build();
 
 		ValueRange response = service.spreadsheets().values().get(spreadsheetId, range).execute();
 
@@ -109,14 +113,22 @@ public class GoogleSheets {
 
 		if (values == null || values.isEmpty()) {
 			return null;
-		} else {
-			return values.stream()
-				.filter(e -> !e.isEmpty())
-				.map(row -> (String) row.get(0))
-				.map(String::toLowerCase)
-				.map(String::trim)
-				.collect(Collectors.toSet());
 		}
+
+		HashSet<String> usernames = new HashSet<>();
+		for (List<Object> row : values) {
+			if (row.isEmpty()) {
+				continue;
+			}
+			for (Object cell : row) {
+				String username = ((String)cell).trim().toLowerCase();
+				if (username.isEmpty()) {
+					continue;
+				}
+				usernames.add(username);
+			}
+		}
+		return usernames;
 	}
 
 	public static void reset() {
