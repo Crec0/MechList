@@ -20,10 +20,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class GoogleSheets {
 
@@ -109,14 +109,17 @@ public class GoogleSheets {
 
 		if (values == null || values.isEmpty()) {
 			return null;
-		} else {
-			return values.stream()
-				.filter(e -> !e.isEmpty())
-				.map(row -> (String) row.get(0))
-				.map(String::toLowerCase)
-				.map(String::trim)
-				.collect(Collectors.toSet());
 		}
+
+		Set<String> usernames = new HashSet<>();
+		for (List<Object> row : values) {
+			for (Object cell : row) {
+				if (cell instanceof String s && !s.isBlank()) {
+					usernames.add(s.trim().toLowerCase());
+				}
+			}
+		}
+		return usernames;
 	}
 
 	public static void reset() {
