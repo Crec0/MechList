@@ -13,20 +13,20 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 
-public record GoogleSheetsConfig(String spreadsheetId, String sheetRange) {
+public record GoogleSheetsConfig(String spreadsheetId, String sheetRange, boolean shouldOpAll) {
 	public static final Gson GSON = new GsonBuilder()
 		.setPrettyPrinting()
 		.registerTypeAdapter(GoogleSheetsConfig.class, new GoogleSheetsConfigDeserializer())
 		.create();
 
 	public void setSpreadsheetId(String id) {
-		var updatedConfig = new GoogleSheetsConfig(id, sheetRange());
+		var updatedConfig = new GoogleSheetsConfig(id, sheetRange(), shouldOpAll());
 		updatedConfig.saveToFile();
 		MechList.setConfig(updatedConfig);
 	}
 
 	public void setSheetRange(String range) {
-		var updatedConfig = new GoogleSheetsConfig(spreadsheetId(), range);
+		var updatedConfig = new GoogleSheetsConfig(spreadsheetId(), range, shouldOpAll());
 		updatedConfig.saveToFile();
 		MechList.setConfig(updatedConfig);
 	}
@@ -59,16 +59,26 @@ public record GoogleSheetsConfig(String spreadsheetId, String sheetRange) {
 		} catch (JsonParseException e) {
 			MechList.LOGGER.error("Failed to parse config file", e);
 		}
-		return new GoogleSheetsConfig("", "");
+		return new GoogleSheetsConfig("", "", false);
 	}
 
 	private static class GoogleSheetsConfigDeserializer implements JsonDeserializer<GoogleSheetsConfig> {
+
+		private String getAsString(JsonObject json, String key) {
+			return json.get(key) == null ? "" : json.get(key).getAsString();
+		}
+
+		private boolean getAsBoolean(JsonObject json, String key) {
+			return json.get(key) != null && json.get(key).getAsBoolean();
+		}
+
 		@Override
 		public GoogleSheetsConfig deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 			JsonObject jsonObject = json.getAsJsonObject();
-			String spreadsheetId = jsonObject.get("spreadsheetId").getAsString();
-			String sheetRange = jsonObject.get("sheetRange").getAsString();
-			return new GoogleSheetsConfig(spreadsheetId, sheetRange);
+			String spreadsheetId = getAsString(jsonObject, "spreadsheetId");
+			String sheetRange = getAsString(jsonObject, "sheetRange");
+			boolean shouldOpAll = getAsBoolean(jsonObject, "shouldOpAll");
+			return new GoogleSheetsConfig(spreadsheetId, sheetRange, shouldOpAll);
 		}
 	}
 }

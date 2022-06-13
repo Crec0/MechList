@@ -7,6 +7,7 @@ import net.andrews.mechlist.GoogleSheets;
 import net.andrews.mechlist.MechList;
 import net.andrews.mechlist.Styles;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.PlayerManager;
 import net.minecraft.server.Whitelist;
 import net.minecraft.server.WhitelistEntry;
 import net.minecraft.server.command.ServerCommandSource;
@@ -90,34 +91,48 @@ public class MechListCommand {
 
 			MinecraftServer server = context.getSource().getServer();
 			Whitelist whitelist = server.getPlayerManager().getWhitelist();
+			PlayerManager manager = server.getPlayerManager();
 
 			TreeSet<String> unwhitelistedPlayers = new TreeSet<>();
+			TreeSet<String> deops = new TreeSet<>();
 
 			for (String name : whitelist.getNames()) {
 				if (names.contains(name.toLowerCase())) continue;
 				GameProfile gameProfile = server.getUserCache().findByName(name).orElse(null);
-				if (gameProfile != null && server.getPermissionLevel(gameProfile) < 2) {
+				if (gameProfile != null) {
 					unwhitelistedPlayers.add(name);
 					whitelist.remove(gameProfile);
+
+					if (manager.isOperator(gameProfile)) {
+						deops.add(gameProfile.getName());
+						manager.removeFromOperators(gameProfile);
+					}
 				}
 			}
 
 			TreeSet<String> whitelistedPlayers = new TreeSet<>();
+			TreeSet<String> ops = new TreeSet<>();
 
 			for (String name : names) {
 				GameProfile gameProfile = server.getUserCache().findByName(name).orElse(null);
-				if (gameProfile != null) {
-					if (!whitelist.isAllowed(gameProfile)) {
-						whitelistedPlayers.add(gameProfile.getName());
-						whitelist.add(new WhitelistEntry(gameProfile));
-					}
-				} else {
+
+				if (gameProfile == null) {
 					reply(
 						context,
 						new LiteralText("Failed to whitelist ").setStyle(Styles.RED.getStyle())
-							.append(new LiteralText(name).setStyle(Styles.GOLD.getStyle()))
-							.append(new LiteralText(". Please check the username.").setStyle(Styles.RED.getStyle()))
+						   .append(new LiteralText(name).setStyle(Styles.GOLD.getStyle()))
+						   .append(new LiteralText(". Please check the username.").setStyle(Styles.RED.getStyle()))
 					);
+					continue;
+				}
+
+				if (!whitelist.isAllowed(gameProfile)) {
+					whitelistedPlayers.add(gameProfile.getName());
+					whitelist.add(new WhitelistEntry(gameProfile));
+				}
+				if (MechList.getConfig().shouldOpAll() && !manager.isOperator(gameProfile)) {
+					ops.add(gameProfile.getName());
+					manager.addToOperators(gameProfile);
 				}
 			}
 
@@ -127,8 +142,12 @@ public class MechListCommand {
 				new LiteralText("Whitelist updated").setStyle(Styles.DARK_GREEN_BOLD.getStyle())
 					.append(new LiteralText("\nWhitelisted: ").setStyle(Styles.DARK_GREEN.getStyle()))
 					.append(new LiteralText(whitelistedPlayers.toString()).setStyle(Styles.DARK_AQUA.getStyle()))
+					.append(new LiteralText("\nOps: ").setStyle(Styles.DARK_GREEN.getStyle()))
+					.append(new LiteralText(ops.toString()).setStyle(Styles.DARK_AQUA.getStyle()))
 					.append(new LiteralText("\nUn-whitelisted: ").setStyle(Styles.DARK_GREEN.getStyle()))
 					.append(new LiteralText(unwhitelistedPlayers.toString()).setStyle(Styles.DARK_AQUA.getStyle()))
+					.append(new LiteralText("\nDe-ops: ").setStyle(Styles.DARK_GREEN.getStyle()))
+					.append(new LiteralText(deops.toString()).setStyle(Styles.DARK_AQUA.getStyle()))
 			);
 		});
 
@@ -154,10 +173,12 @@ public class MechListCommand {
 
 		reply(context,
 			new LiteralText("Mechlist Config").setStyle(Styles.DARK_GREEN_BOLD.getStyle())
-				.append(new LiteralText(		"\nSheet ID: ").setStyle(Styles.DARK_GREEN.getStyle()))
-				.append(new LiteralText(config.spreadsheetId()).setStyle( Styles.DARK_AQUA.getStyle()))
-				.append(new LiteralText(	 "\nSheet Range: ").setStyle(Styles.DARK_GREEN.getStyle()))
-				.append(new LiteralText(   config.sheetRange()).setStyle( Styles.DARK_AQUA.getStyle()))
+				.append(new LiteralText(           "\nSheet ID: ").setStyle(Styles.DARK_GREEN.getStyle()))
+				.append(new LiteralText(   config.spreadsheetId()).setStyle(Styles.DARK_AQUA.getStyle()))
+				.append(new LiteralText(        "\nSheet Range: ").setStyle(Styles.DARK_GREEN.getStyle()))
+				.append(new LiteralText(      config.sheetRange()).setStyle(Styles.DARK_AQUA.getStyle()))
+			    .append(new LiteralText(      "\nShould Op all: ").setStyle(Styles.DARK_GREEN.getStyle()))
+				.append(new LiteralText("" + config.shouldOpAll()).setStyle(Styles.DARK_AQUA.getStyle()))
 		);
 		return 1;
 	}
