@@ -14,6 +14,6 @@ public class MixinMinecraftServer {
 		at = @At("HEAD")
 	)
 	private void onShutdown(CallbackInfo ci) {
-		MechList.EXECUTOR.shutdown();
+		MechList.EXECUTOR.shutdownNow();
 	}
 }

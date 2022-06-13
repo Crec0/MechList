@@ -1,6 +1,5 @@
 plugins {
 	id 'fabric-loom' version '0.11-SNAPSHOT'
-	id 'com.github.johnrengelman.shadow' version '7.1.2'
 	id 'maven-publish'
 }
 
@@ -15,15 +14,26 @@ repositories {
 	mavenCentral()
 }
 
+configurations.create("transitiveInclude")
+
+configurations.transitiveInclude {
+	transitive = true
+	exclude(group: "com.mojang")
+}
+
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	shadow('com.google.api-client:google-api-client:1.32.1')
-	shadow('com.google.oauth-client:google-oauth-client-jetty:1.32.1')
-	shadow('com.google.apis:google-api-services-sheets:v4-rev20220411-1.32.1')
+	transitiveInclude(implementation('com.google.api-client:google-api-client:1.32.1'))
+	transitiveInclude(implementation('com.google.oauth-client:google-oauth-client-jetty:1.32.1'))
+	transitiveInclude(implementation('com.google.apis:google-api-services-sheets:v4-rev20220411-1.32.1'))
+
+	configurations.getByName("transitiveInclude").resolvedConfiguration.resolvedArtifacts.forEach {
+		include(it.moduleVersion.id.toString())
+	}
 }
 
 processResources {
@@ -41,21 +51,6 @@ tasks.withType(JavaCompile).configureEach {
 
 java {
 	withSourcesJar()
-}
-
-shadowJar {
-	configurations = [project.configurations.shadow]
-}
-
-remapJar {
-	dependsOn tasks.shadowJar
-	inputFile.set(tasks.shadowJar.archiveFile)
-}
-
-build {
-	doLast {
-		delete(tasks.shadowJar.archiveFile)
-	}
 }
 
 jar {
