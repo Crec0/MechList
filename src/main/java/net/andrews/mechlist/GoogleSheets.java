@@ -117,15 +117,11 @@ public class GoogleSheets {
 
 		HashSet<String> usernames = new HashSet<>();
 		for (List<Object> row : values) {
-			if (row.isEmpty()) {
-				continue;
-			}
 			for (Object cell : row) {
 				String username = ((String)cell).trim().toLowerCase();
 				if (username.isEmpty()) {
-					continue;
+					usernames.add(username);
 				}
-				usernames.add(username);
 			}
 		}
 		return usernames;
