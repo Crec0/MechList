@@ -28,7 +28,6 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	transitiveInclude(implementation('com.google.api-client:google-api-client:1.32.1'))
-	transitiveInclude(implementation('com.google.oauth-client:google-oauth-client-jetty:1.32.1'))
 	transitiveInclude(implementation('com.google.apis:google-api-services-sheets:v4-rev20220411-1.32.1'))
 
 	configurations.getByName("transitiveInclude").resolvedConfiguration.resolvedArtifacts.forEach {
