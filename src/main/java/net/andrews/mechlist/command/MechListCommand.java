@@ -50,32 +50,14 @@ public class MechListCommand {
 		);
 	}
 
-	private static void notifyAuth(CommandContext<ServerCommandSource> ctx, String link) {
-		if (link == null)
-			return;
-
-		ctx.getSource().sendFeedback(
-			new LiteralText("[Authenticate] " + link)
-				.setStyle(
-					Style.EMPTY
-						.withColor(Formatting.DARK_GREEN)
-						.withUnderline(true)
-						.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new LiteralText(link)))
-						.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, link))
-				),
-			true
-		);
-	}
-
 	private static int sync(CommandContext<ServerCommandSource> context) {
 		context.getSource().sendFeedback(new LiteralText("Syncing..."), true);
 
-		GoogleSheets.reset();
 		MechList.EXECUTOR.submit(() -> {
 			Set<String> names = null;
 
 			try {
-				names = GoogleSheets.getUsernames(link -> notifyAuth(context, link));
+				names = GoogleSheets.getUsernames();
 			} catch (IOException | GeneralSecurityException e) {
 				String error = "Failed to refresh mechlist. " + e;
 				MechList.LOGGER.error(error);

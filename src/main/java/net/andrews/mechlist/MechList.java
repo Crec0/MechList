@@ -17,7 +17,7 @@ public class MechList implements ModInitializer {
 	public static final String USER_ID = "user";
 	public static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
-	private static GoogleSheetsConfig config = new GoogleSheetsConfig("", "", false);
+	private static GoogleSheetsConfig config = new GoogleSheetsConfig("", "", "", false);
 
 	@Override
 	public void onInitialize() {

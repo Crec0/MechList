@@ -13,35 +13,34 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 
-public record GoogleSheetsConfig(String spreadsheetId, String sheetRange, boolean shouldOpAll) {
+public record GoogleSheetsConfig(String spreadsheetId, String sheetRange, String apiKey, boolean shouldOpAll) {
 	public static final Gson GSON = new GsonBuilder()
 		.setPrettyPrinting()
 		.registerTypeAdapter(GoogleSheetsConfig.class, new GoogleSheetsConfigDeserializer())
 		.create();
 
 	public void setSpreadsheetId(String id) {
-		var updatedConfig = new GoogleSheetsConfig(id, sheetRange(), shouldOpAll());
+		var updatedConfig = new GoogleSheetsConfig(id, sheetRange(), apiKey(), shouldOpAll());
 		updatedConfig.saveToFile();
 		MechList.setConfig(updatedConfig);
 	}
 
 	public void setSheetRange(String range) {
-		var updatedConfig = new GoogleSheetsConfig(spreadsheetId(), range, shouldOpAll());
+		var updatedConfig = new GoogleSheetsConfig(spreadsheetId(), range, apiKey(), shouldOpAll());
 		updatedConfig.saveToFile();
 		MechList.setConfig(updatedConfig);
 	}
 
-	public void createFilesIfNotExist() {
-		if (Files.exists(MechList.CONFIG_DIR)) return;
+	public void saveToFile() {
+
 		try {
-			Files.createDirectories(MechList.CONFIG_DIR);
+			if (!Files.exists(MechList.CONFIG_DIR)) {
+				Files.createDirectories(MechList.CONFIG_DIR);
+			}
 		} catch (IOException e) {
 			MechList.LOGGER.error("Failed to create config directory", e);
 		}
-	}
 
-	public void saveToFile() {
-		createFilesIfNotExist();
 		try (BufferedWriter writer = Files.newBufferedWriter(ConfigFiles.CONFIG.getPath())) {
 			GSON.toJson(this, writer);
 		} catch (IOException e) {
@@ -59,7 +58,7 @@ public record GoogleSheetsConfig(String spreadsheetId, String sheetRange, boolea
 		} catch (JsonParseException e) {
 			MechList.LOGGER.error("Failed to parse config file", e);
 		}
-		return new GoogleSheetsConfig("", "", false);
+		return new GoogleSheetsConfig("", "", "", false);
 	}
 
 	private static class GoogleSheetsConfigDeserializer implements JsonDeserializer<GoogleSheetsConfig> {
@@ -77,8 +76,9 @@ public record GoogleSheetsConfig(String spreadsheetId, String sheetRange, boolea
 			JsonObject jsonObject = json.getAsJsonObject();
 			String spreadsheetId = getAsString(jsonObject, "spreadsheetId");
 			String sheetRange = getAsString(jsonObject, "sheetRange");
+			String apiKey = getAsString(jsonObject, "api-key");
 			boolean shouldOpAll = getAsBoolean(jsonObject, "shouldOpAll");
-			return new GoogleSheetsConfig(spreadsheetId, sheetRange, shouldOpAll);
+			return new GoogleSheetsConfig(spreadsheetId, sheetRange, apiKey, shouldOpAll);
 		}
 	}
 }
